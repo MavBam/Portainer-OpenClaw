@@ -55,97 +55,86 @@ There is no official image.  You must build from source.
 
 So let's start:
 
-First, create a build area on your Portainer machine:
-
+First, navigate to a 'quiet directory [make one in your home folder if need be] and clone the latest version upstream:
 ```
-mkdir -p ~/openclaw
+git clone https://github.com/openclaw/openclaw.git
 cd ~/openclaw
 ```
-
-Now create the Dockerfile:
-
+We need to edit out the non-root bits from the Dockerfile
 ```
 nano Dockerfile
 ```
-Paste the below:
-
-    FROM node:22
-
-    WORKDIR /app
-
-    RUN apt-get update && apt-get install -y \
-        git \
-        python3 \
-        bash \
-     && rm -rf /var/lib/apt/lists/*
-
-    COPY . /app
-
-    RUN corepack enable \
-     && pnpm install --frozen-lockfile \
-     && pnpm build
-
-    CMD ["node", "/app/moltbot.mjs"]
-
-Clone the latest version upstream:
+Comment out the below:
 ```
-git clone https://github.com/openclaw/openclaw.git
+RUN chown -R node:node /app
 ```
+and (using #)
+```
+USER node
+```
+Save the Dockerfile, and exit
 
+Now build the image:
 
-Build the image:
-
-    docker build -t openclaw:latest .
-
+    docker build --no-cache --progress=plain -t openclaw:latest . 2>&1 | tee build.log
 ---
 
 ## Portainer Stack (Known-Good)
 
 This is the canonical, working stack definition.
+```
+version: "3.9"
 
-    version: "3.9"
-
-    services:
-      openclaw:
-        image: openclaw:latest
-        container_name: openclaw
-        user: "0:0"
-        environment:
-          HOME: /home/node
-        volumes:
-          - openclaw-state:/home/node/.moltbot
-          - openclaw-clawdbot:/home/node/.clawdbot
-          - openclaw-workspace:/home/node/clawd
-        restart: unless-stopped
-
-      openclaw-gateway:
-        image: openclaw:latest
-        container_name: openclaw-gateway
-        user: "0:0"
-        environment:
-          HOME: /home/node
-          CLAWDBOT_GATEWAY_PASSWORD: "${CLAWDBOT_GATEWAY_PASSWORD}"
-        volumes:
-          - openclaw-state:/home/node/.moltbot
-          - openclaw-clawdbot:/home/node/.clawdbot
-          - openclaw-workspace:/home/node/clawd
-        command: >
-          node /app/moltbot.mjs gateway run
-          --port 18789
-          --bind lan
-          --auth password
-          --password "${CLAWDBOT_GATEWAY_PASSWORD}"
-          --verbose
-          --force
-        ports:
-          - "18789:18789"
-        restart: unless-stopped
-
+services:
+  openclaw:
+    image: openclaw:latest
+    container_name: openclaw
+    user: "0:0"
+    environment:
+      HOME: /home/node
     volumes:
-      openclaw-state:
-      openclaw-clawdbot:
-      openclaw-workspace:
+      - openclaw-state:/home/node/.moltbot
+      - openclaw-clawdbot:/home/node/.clawdbot
+      - openclaw-workspace:/home/node/clawd
+    restart: unless-stopped
 
+  openclaw-gateway:
+    image: openclaw:latest
+    container_name: openclaw-gateway
+    user: "0:0"
+    environment:
+      HOME: /home/node
+      CLAWDBOT_GATEWAY_PASSWORD: "${CLAWDBOT_GATEWAY_PASSWORD}"
+    volumes:
+      - openclaw-state:/home/node/.moltbot
+      - openclaw-clawdbot:/home/node/.clawdbot
+      - openclaw-workspace:/home/node/clawd
+    command: >
+      node /app/openclaw.mjs gateway run
+      --port 28789 #original port 18789
+      --bind lan
+      --auth password
+      --password "${CLAWDBOT_GATEWAY_PASSWORD}"
+      --verbose
+          --force
+    deploy: #Comment this out if you are fine with assigning resources, or you come across resource constraints
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: '4g'
+        reservations:
+          cpus: '2.0'
+          memory: '1g'
+    
+    ports:
+      - "18789:18789"
+    restart: unless-stopped
+
+volumes:
+  openclaw-state:
+  openclaw-clawdbot:
+  openclaw-workspace:
+```
 ---
 
 ## Why user: root and HOME=/home/node
