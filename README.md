@@ -53,7 +53,21 @@ These paths are mandatory.  OpenClaw resolves configuration via HOME, not CLI fl
 
 There is no official image.  You must build from source.
 
-Dockerfile:
+So let's start:
+
+First, create a build area on your Portainer machine:
+
+```
+mkdir -p ~/openclaw
+cd ~/openclaw
+```
+
+Now create the Dockerfile:
+
+```
+nano Dockerfile
+```
+Paste the below:
 
     FROM node:22
 
