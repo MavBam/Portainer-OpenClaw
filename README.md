@@ -87,6 +87,12 @@ Paste the below:
 
     CMD ["node", "/app/moltbot.mjs"]
 
+Clone the latest version upstream:
+```
+git clone https://github.com/openclaw/openclaw.git
+```
+
+
 Build the image:
 
     docker build -t openclaw:latest .
