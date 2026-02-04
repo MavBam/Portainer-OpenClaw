@@ -1,9 +1,10 @@
-# OpenClaw
+# How to install OpenClaw on Portainer
 (formerly Clawdbot / Moltbot)
 
 Status: Stable, repeatable, battle-tested
 Deployment: Docker + Portainer
 Note: No official Docker image exists
+Gain source from https://github.com/openclaw/openclaw
 
 ---
 
