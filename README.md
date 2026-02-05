@@ -64,11 +64,11 @@ We need to edit out the non-root bits from the Dockerfile
 ```
 nano Dockerfile
 ```
-Comment out the below:
+Comment out the below within the Docker file (using #):
 ```
 RUN chown -R node:node /app
 ```
-and (using #)
+and 
 ```
 USER node
 ```
@@ -81,7 +81,7 @@ Now build the image:
 
 ## Portainer Stack (Known-Good)
 
-This is the canonical, working stack definition.
+This is the canonical, working stack definition that is working for me, and forces a couple of things that were painfully long winded to remediate.
 ```
 version: "3.9"
 
@@ -89,54 +89,67 @@ services:
   openclaw:
     image: openclaw:latest
     container_name: openclaw
-    user: "0:0"
     environment:
       HOME: /home/node
+      OPENCLAW_GATEWAY_PASSWORD: "${OPENCLAW_GATEWAY_PASSWORD}"
     volumes:
-      - openclaw-state:/home/node/.moltbot
-      - openclaw-clawdbot:/home/node/.clawdbot
-      - openclaw-workspace:/home/node/clawd
-    restart: unless-stopped
+      - openclaw-state:/home/node/.openclaw
+      - openclaw-workspace:/home/node/openclaw
+    command:
+      - node
+      - dist/index.js
+      - gateway
+      - run
+      - --allow-unconfigured
+      - --bind
+      - 0.0.0.0
+      - --port
+      - "18789"
+      - --auth
+      - password
+      - --password
+      - "${OPENCLAW_GATEWAY_PASSWORD}"
+      - --verbose
 
-  openclaw-gateway:
-    image: openclaw:latest
-    container_name: openclaw-gateway
-    user: "0:0"
-    environment:
-      HOME: /home/node
-      CLAWDBOT_GATEWAY_PASSWORD: "${CLAWDBOT_GATEWAY_PASSWORD}"
-    volumes:
-      - openclaw-state:/home/node/.moltbot
-      - openclaw-clawdbot:/home/node/.clawdbot
-      - openclaw-workspace:/home/node/clawd
-    command: >
-      node /app/openclaw.mjs gateway run
-      --port 28789 #original port 18789
-      --bind lan
-      --auth password
-      --password "${CLAWDBOT_GATEWAY_PASSWORD}"
-      --verbose
-          --force
-    deploy: #Comment this out if you are fine with assigning resources, or you come across resource constraints
-      resources:
-        limits:
-          cpus: '4.0'
-          memory: '4g'
-        reservations:
-          cpus: '2.0'
-          memory: '1g'
-    
     ports:
       - "18789:18789"
     restart: unless-stopped
 
+
+  caddy:
+    image: caddy:2
+    container_name: openclaw-caddy
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - /data/compose/34/Caddyfile:/etc/caddy/Caddyfile:ro
+
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      - openclaw
+
 volumes:
+
   openclaw-state:
-  openclaw-clawdbot:
+    name: openclaw-state
   openclaw-workspace:
+    name: openclaw-workspace
+  caddy_data:
+  caddy_config:
+
 ```
 ---
-
+Ensure you set an Environment Variable within the Stack Editor as follows
+```
+Name:  OPENCLAW_GATEWAY_PASSWORD
+Value: {Whatever you'd like to set as a password}
+```
+---
+Notes:
+---
 ## Why user: root and HOME=/home/node
 
 OpenClaw requires elevated privileges inside the container.
@@ -155,35 +168,21 @@ This is expected behaviour.
 
 ## Configuration (moltbot.json)
 
-Config path inside container:
+If the volumes are blank, run setup against the volumes you are using:
+```
+docker run --rm -it \
+  -e HOME=/home/node \
+  -v openclaw-state:/home/node/.openclaw \
+  -v openclaw-workspace:/home/node/openclaw \
+  openclaw:latest \
+  node dist/index.js setup
+```
 
-    /home/node/.moltbot/moltbot.json
-
-Known-good excerpt:
-
-    agents: {
-      defaults: {
-        workspace: "/home/node/clawd",
-        compaction: {
-          mode: "default",
-          memoryFlush: {
-            enabled: false
-          }
-        },
-        maxConcurrent: 1,
-        subagents: {
-          maxConcurrent: 8
-        }
-      }
-    }
-
-Memory flush is disabled because:
-- It interrupts WhatsApp conversations
-- It causes context confusion
-- It is unnecessary with durable sessions
-
-Disabling it does not break compaction.
-
+Then verify the config exists on the host:
+```
+sudo ls -la /var/lib/docker/volumes/openclaw-state/_data | head -n 120
+sudo ls -la /var/lib/docker/volumes/openclaw-state/_data/openclaw.json
+```
 ---
 
 ## Session Durability
