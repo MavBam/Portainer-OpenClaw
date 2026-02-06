@@ -29,20 +29,16 @@ This documentation is written for operators, not framework contributors.
 
 Containers:
 - openclaw – main agent runtime
-- openclaw-gateway – WhatsApp gateway service
+- openclaw-caddy – https service
 
 Docker volumes (critical):
 
 Volume: openclaw-state
-Mount: /home/node/.moltbot
+Mount: /home/node/.openclaw
 Purpose: Configuration and runtime state
 
-Volume: openclaw-clawdbot
-Mount: /home/node/.clawdbot
-Purpose: Sessions and transcripts
-
 Volume: openclaw-workspace
-Mount: /home/node/clawd
+Mount: /home/node/openclaw
 Purpose: Workspace and outputs
 
 These paths are mandatory.  OpenClaw resolves configuration via HOME, not CLI flags.
@@ -163,6 +159,40 @@ Ensure you set an Environment Variable within the Stack Editor as follows
 Name:  OPENCLAW_GATEWAY_PASSWORD
 Value: {Whatever you'd like to set as a password}
 ```
+For Caddy, I wanted to provide a https environment.  I'm not proficient with it, but a lovely chap helped me.  For awareness, here's the config for my local network:
+
+First, on each client machine:
+- Windows: `C:\Windows\System32\drivers\etc\hosts`
+- macOS/Linux: `/etc/hosts`
+
+Add:
+```
+[IP of your Portainer host]  openclaw.lan
+```
+On the Portainer host, edit the Caddyfile:
+```
+nano /data/compose/34/Caddyfile
+```
+Replace all with the following:
+```
+{
+	local_certs
+}
+
+http://openclaw.lan {
+	redir https://openclaw.lan{uri} permanent
+}
+
+openclaw.lan {
+	tls internal
+	reverse_proxy openclaw:18789
+}
+```
+Save, then restart Caddy
+```
+docker exec -it openclaw-caddy caddy reload --config /etc/caddy/Caddyfile
+```
+
 ---
 Notes:
 ---
@@ -177,7 +207,6 @@ Setting HOME=/home/node forces config discovery to the mounted volume.
 Without this, you will see an error
 
 This is expected behaviour.
-
 ---
 
 ## Configuration (openclaw.json)
