@@ -34,11 +34,15 @@ Containers:
 Docker volumes (critical):
 
 Volume: openclaw-state
-Mount: /home/node/.openclaw
+
+Mount: ```/home/node/.openclaw```
+
 Purpose: Configuration and runtime state
 
 Volume: openclaw-workspace
-Mount: /home/node/openclaw
+
+Mount: ```/home/node/openclaw```
+
 Purpose: Workspace and outputs
 
 These paths are mandatory.  OpenClaw resolves configuration via HOME, not CLI flags.
@@ -204,8 +208,9 @@ Value: {Whatever you'd like to set as a password}
 OpenClaw requires elevated privileges inside the container.
 Sudo is meaningless in Docker.
 
-When running as root, OpenClaw defaults to /root/.moltbot.
-Setting HOME=/home/node forces config discovery to the mounted volume.
+When running as root, OpenClaw defaults to ```/root/.openclaw```
+
+Setting ```HOME=/home/node``` forces config discovery to the mounted volume.
 
 Without this, you will see an error
 
