@@ -135,30 +135,7 @@ volumes:
 
 ```
 ---
-Go into remote shell:
-```
-docker exec -it --user node openclaw bash
-```
-OpenClaw pairing command:
-```
-node ./openclaw.mjs devices list
-```
-Copy Pending Request code and then insert it into:
-```
-node ./openclaw.mjs devices approve <ID_OR_CODE>
-```
-Confirm with:
-```
-node ./openclaw.mjs devices list
-```
-That should show that there are no pending requests.
-
----
-Ensure you set an Environment Variable within the Stack Editor as follows
-```
-Name:  OPENCLAW_GATEWAY_PASSWORD
-Value: {Whatever you'd like to set as a password}
-```
+## Caddy
 For Caddy, I wanted to provide a https environment.  I'm not proficient with it, but a lovely chap helped me.  For awareness, here's the config for my local network:
 
 First, on each client machine:
@@ -192,9 +169,35 @@ Save, then restart Caddy
 ```
 docker exec -it openclaw-caddy caddy reload --config /etc/caddy/Caddyfile
 ```
+---
+## Pair the console to the server
+Go into remote shell:
+```
+docker exec -it --user node openclaw bash
+```
+OpenClaw pairing command:
+```
+node ./openclaw.mjs devices list
+```
+Copy Pending Request code and then insert it into:
+```
+node ./openclaw.mjs devices approve <ID_OR_CODE>
+```
+Confirm with:
+```
+node ./openclaw.mjs devices list
+```
+That should show that there are no pending requests.
 
 ---
-Notes:
+Ensure you set an Environment Variable within the Stack Editor as follows
+```
+Name:  OPENCLAW_GATEWAY_PASSWORD
+Value: {Whatever you'd like to set as a password}
+```
+
+---
+## Notes:
 ---
 ## Why user: root and HOME=/home/node
 
