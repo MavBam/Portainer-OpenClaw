@@ -21,7 +21,7 @@ This setup provides:
 - Clean Docker volume separation
 - Fully repeatable rebuilds
 
-This documentation is written for operators, not framework contributors.
+This documentation is written for operators, not framework contributors.  It's also very much a work in progress.  Any issues, then I will attempt to assist.  This works fine on my Poprtainer instance; yours may differ.
 
 ---
 
