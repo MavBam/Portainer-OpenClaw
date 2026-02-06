@@ -110,29 +110,25 @@ services:
       - --password
       - "${OPENCLAW_GATEWAY_PASSWORD}"
       - --verbose
-
     ports:
       - "18789:18789"
     restart: unless-stopped
-
 
   caddy:
     image: caddy:2
     container_name: openclaw-caddy
     ports:
-      - "443:443"
       - "80:80"
+      - "443:443"
     volumes:
       - /data/compose/34/Caddyfile:/etc/caddy/Caddyfile:ro
-
       - caddy_data:/data
       - caddy_config:/config
-    restart: unless-stopped
     depends_on:
       - openclaw
+    restart: unless-stopped
 
 volumes:
-
   openclaw-state:
     name: openclaw-state
   openclaw-workspace:
@@ -140,7 +136,27 @@ volumes:
   caddy_data:
   caddy_config:
 
+
 ```
+---
+Go into remote shell:
+```
+docker exec -it --user node openclaw bash
+```
+OpenClaw pairing command:
+```
+node ./openclaw.mjs devices list
+```
+Copy Pending Request code and then insert it into:
+```
+node ./openclaw.mjs devices approve <ID_OR_CODE>
+```
+Confirm with:
+```
+node ./openclaw.mjs devices list
+```
+That should show that there are no pending requests.
+
 ---
 Ensure you set an Environment Variable within the Stack Editor as follows
 ```
@@ -158,15 +174,13 @@ Sudo is meaningless in Docker.
 When running as root, OpenClaw defaults to /root/.moltbot.
 Setting HOME=/home/node forces config discovery to the mounted volume.
 
-Without this, you will see:
-
-    Missing config. Run `moltbot setup`
+Without this, you will see an error
 
 This is expected behaviour.
 
 ---
 
-## Configuration (moltbot.json)
+## Configuration (openclaw.json)
 
 If the volumes are blank, run setup against the volumes you are using:
 ```
@@ -230,10 +244,6 @@ Unknown option --config:
 Cause: OpenClaw does not support --config
 Fix: Remove the flag
 
-Memory flush messages return:
-Cause: Wrong config file being read
-Fix: Verify HOME and volumes, then restart
-
 ---
 
 ## Naming Volatility
@@ -242,8 +252,6 @@ Upstream renames include:
 - Clawdbot
 - Moltbot
 - OpenClaw
-
-This documentation is anchored in paths and behaviour, not branding.
 
 ---
 
